@@ -1,0 +1,16 @@
+This is just a scratch repository for a future HDFS set of scripts/views that will help monitor Hadoop HDFS.
+
+Depending on your FSIMAGE size, the script will take several minutes or even hours to run.
+
+In the first test setups, 3.2 M files took ~40 Min to populate couch completely.
+
+You probably want to set "documents_submitted_per_cycle" in a value that makes sense. For now I'm using 5k for 
+remote couchDBs and 50k for local ones.
+
+This will only work with an FSIMAGE formatted by the following command :
+
+hdfs oiv -skipBlocks True -p Delimited -delimiter "**" -i fsimage -o fsimage-red.del
+
+To use any other filename as output, specify it as @ARGV[1] (or equivalent to BASH $1).
+
+This is very preliminar, so you're on your own.

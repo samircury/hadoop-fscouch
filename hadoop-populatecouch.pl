@@ -4,7 +4,9 @@ use strict;
 use warnings;
 use Data::Dumper;
 use Time::ParseDate;
+use CouchDB::Client::DB;
 use CouchDB::Client;
+use CouchDB::Client::Doc;
 
 my $input = $ARGV[0] || "fsimage-red.del";
 
@@ -12,13 +14,13 @@ sub main {
         
     # Get the XML itself
     my $input_image = shift;
-    if (not -e $input_image) {
-        die "Please provide an existing input as the first argument";
-    }
+    #if (not -e $input_image) {
+    #    die "Please provide an existing input as the first argument";
+    #}
     # Connect to the database
-    my $c = CouchDB::Client->new(uri => 'http://mydevdb.iriscouch.com:5984/');
+    my $c = CouchDB::Client->new(uri => 'http://user:pw@user.cloudant.com');
     $c->testConnection or die "The server cannot be reached";
-    my $db = $c->newDB('hdfs2');
+    my $db = $c->newDB('db');
 
     # Iterate through the (possibly huge) input file
     open FILE, "<$input_image";
@@ -32,15 +34,26 @@ sub main {
         
         push(@documents,$document) if $document;
         if (scalar( @documents ) == $documents_submitted_per_cycle) {
-            print "Submitting ".scalar(@documents)." documents \n";
+            print "submitting \n";
             # Submit documents
             $db->bulkStore(\@documents);
+            print(scalar(@documents)."\n");
             # empty array
             @documents = ();
+            print(scalar(@documents)."\n");
         }
         
     }
     close FILE;	
+    # In case we still have the last N < per_cycle documents in the
+    # array, submit them now
+    if (scalar( @documents ) > 0 ) {
+	print "submitting \n";
+	$db->bulkStore(\@documents);
+	print(scalar(@documents)."\n");
+	@documents = ();
+	print(scalar(@documents)."\n");
+    }
 }
 
 sub process_document{
@@ -57,10 +70,12 @@ sub process_document{
     $inode{'owner'} = $fields[11];
     $inode{'group'} = $fields[12];
 
+
     if ($inode{'size'} && $inode{'size'} > 200) {
         my $document = CouchDB::Client::Doc->new( 'id' => $lfn ,'data' => \%inode, 'db' => $db);   
         return $document;
     }
 }
+
 
 main($input);

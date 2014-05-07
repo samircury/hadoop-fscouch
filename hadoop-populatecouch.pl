@@ -70,6 +70,8 @@ sub process_document{
     $inode{'owner'} = $fields[11];
     $inode{'group'} = $fields[12];
 
+    # Eliminating a lot of overhead by dropping checksums
+    return undef if  $lfn =~ /.*cksum.*/;
 
     if ($inode{'size'} && $inode{'size'} > 200) {
         my $document = CouchDB::Client::Doc->new( 'id' => $lfn ,'data' => \%inode, 'db' => $db);   
